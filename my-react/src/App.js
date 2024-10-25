@@ -1,43 +1,33 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-// Definisikan tipe data Book
-interface Book {
-  id: number;
-  title: string;
-  author: string;
-  category: string;
-  published_year: number;
-  status: boolean;
-}
-
-export default function Home() {
-  const [books, setBooks] = useState<Book[]>([]);
+const App = () => {
+  const [books, setBooks] = useState([]); // State untuk daftar buku
   const [formData, setFormData] = useState({
     title: '',
     author: '',
     category: '',
     published_year: '',
-    status: true,
+    status: 'true',
   });
 
-  // Fungsi untuk mengambil data buku dari API Laravel
+  // Fungsi untuk mengambil semua buku dari API Laravel
   const fetchBooks = async () => {
     try {
       const response = await axios.get('http://127.0.0.1:8000/api/books');
-      setBooks(response.data.data); // Simpan data buku ke state
+      setBooks(response.data.data); // Simpan data ke state
     } catch (error) {
       console.error('Error fetching books:', error);
     }
   };
 
-  // Panggil fetchBooks saat komponen dimount
+  // Panggil fetchBooks saat komponen pertama kali dimuat
   useEffect(() => {
     fetchBooks();
   }, []);
 
   // Fungsi untuk menangani input form
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -45,18 +35,21 @@ export default function Home() {
     }));
   };
 
-  // Fungsi untuk mengirim data buku baru ke API Laravel
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Fungsi untuk menambahkan buku baru
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://127.0.0.1:8000/api/books', formData);
-      fetchBooks(); // Refresh data setelah berhasil menambah buku
+      await axios.post('http://127.0.0.1:8000/api/books', {
+        ...formData,
+        status: formData.status === 'true',
+      });
+      fetchBooks(); // Refresh daftar buku setelah menambah data
       setFormData({
         title: '',
         author: '',
         category: '',
         published_year: '',
-        status: true,
+        status: 'true',
       });
     } catch (error) {
       console.error('Error adding book:', error);
@@ -67,7 +60,7 @@ export default function Home() {
     <div style={{ padding: '2rem' }}>
       <h1>Library Books</h1>
 
-      {/* Form untuk menambahkan buku baru */}
+      {/* Form untuk menambahkan buku */}
       <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }}>
         <input
           type="text"
@@ -101,14 +94,14 @@ export default function Home() {
           onChange={handleChange}
           required
         />
-        <select name="status" value={String(formData.status)} onChange={handleChange}>
+        <select name="status" value={formData.status} onChange={handleChange}>
           <option value="true">Available</option>
           <option value="false">Not Available</option>
         </select>
         <button type="submit">Add Book</button>
       </form>
 
-      {/* Tampilkan daftar buku */}
+      {/* Daftar buku */}
       <h2>Books List</h2>
       {books.length > 0 ? (
         <ul>
@@ -123,4 +116,6 @@ export default function Home() {
       )}
     </div>
   );
-}
+};
+
+export default App;
